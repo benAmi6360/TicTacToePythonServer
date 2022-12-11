@@ -1,9 +1,13 @@
 import socket
 from window import GameWindow
+from protocol import parse, parse_row_col
+from server import get_cords
+
+
 
 def main():
     sock = socket.socket()
-    sock.connect(('127.0.0.1', 1729))
+    sock.connect(('10.92.13.171', 1729))
     root = GameWindow('TicTacToe', sock)
     root.mainloop()
 

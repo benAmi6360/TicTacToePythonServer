@@ -1,13 +1,13 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from PIL import Image, ImageTk # pip install Pillow
 import tkinter.font as font
 from functools import partial
-from utils import change_text
+from protocol import change_text
 
 
 class GameWindow:
+    board = []
     """Tic Tac Toe game window"""
     def __init__(self, title: str, socket) -> None:
         self.sock = socket
@@ -37,10 +37,12 @@ class GameWindow:
         for i in range(3):
             for column in range(3):
                 """Setup the button"""
-                b = Button(mainframe, width=5, relief=SUNKEN, height=2, font=font)
-                p = partial(change_text, args=(b, self.sock))
-                b.config(command=p)
+                b = Button(mainframe, width=5, height=2, font=font)
                 b.grid(row=i, column=column)
+                self.board.append(b)
+        for btn in self.board:
+            p = partial(change_text, args=(btn, self.sock, self._mainframe))
+            btn.config(command=p)
 
 
     def mainloop(self) -> None:
