@@ -1,13 +1,14 @@
+"""Client file of the TicTacToe project"""
 import socket
 from window import GameWindow
-from protocol import parse, parse_row_col
-from server import get_cords
 
 
 
 def main():
+    """Main entry for the file"""
+    ip = input("Enter the server address: ")
     sock = socket.socket()
-    sock.connect(('10.92.13.171', 1729))
+    sock.connect((ip, 1729))
     root = GameWindow('TicTacToe', sock)
     root.mainloop()
 

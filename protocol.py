@@ -1,7 +1,8 @@
-import time
-from server import get_cords
+"""A file that responsible of checking stuff like protocol"""
+from game_info import GameBoard
 
 def parse(data: str):
+    """Takes a square cordinates and convert them to the protocol"""
     data = data.split(', ')
     lst = []
     for item in data:
@@ -11,27 +12,21 @@ def parse(data: str):
 
 
 def parse_row_col(data: str):
+    """Maps a message from the server to a dictionary"""
     data = data.split('#')
-    map = {}
+    milon = {}
     for item in data:
         try:
             item = item.split(':')
-            map[item[0]] = item[1]
+            milon[item[0]] = item[1]
         except:
             break
-    return map
-
-
-def get_btn_with_cords(cords, board):
-    for row in board:
-        for btn in row:
-            inf = btn.grid_info()
-            row, col = inf['row'], inf['column']
-            if row == cords[0] and col == cords[1]:
-                return btn
+    return milon
 
 
 def change_text(args):
+    """The onClick commadn of the buttons"""
+    game_info = GameBoard()
     try:
         button, socket, master = args
         inf = button.grid_info()
@@ -44,7 +39,7 @@ def change_text(args):
         socket.send('GOTIT###'.encode())
         data = socket.recv(1024).decode()
         map = parse_row_col(data)
-        cords = get_cords(map)
+        cords = game_info.get_cords(map)
         btn = master.grid_slaves(row=cords[0], column=cords[1])
         btn[0].config(text='O', state='disabled')
     except:

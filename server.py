@@ -1,99 +1,65 @@
+"""Server file of the TicTacToe game"""
 import socket
 import random
-from MarkType import MarkType
-from GameDoneException import GameDoneException
+from game_info import GameBoard
+from game_done_exception import GameDoneException
 
-
-board = []
-
-
-def initialize_grid():
-    grid = []
-    for _ in range(3):
-        row = []
-        for _ in range(3):
-            row.append(MarkType.FREE)
-        grid.append(row)
-    return grid
-
-
-def is_board_full():
-    for row in board:
-        for square in row:
-            if square == MarkType.FREE:
-                return False
-    return True
-
-
-def get_cords(map):
-    cords = []
-    for key in map.keys():
-        cords.append(int(map[key]))
-    return cords
-
-def update_board(map: dict) -> None:
-    global board
-    cords = get_cords(map)
-    board[cords[0]][cords[1]] = MarkType.TAKEN
+game_board = GameBoard()
 
 
 def parse_data_to_dict(data):
+    """Parses data received from client into a dictionary"""
     rowcol = {}
     for item in data.split('#'):
         try:
             item = item.split(':')
             rowcol[item[0]] = int(item[1])
-        except:
+        except Exception:
             break
     return rowcol
 
 
-def validate_square(map: dict) -> bool:
-    cords = get_cords(map)
-    return board[cords[0]][cords[1]] == MarkType.FREE
-
 
 def get_random_cords():
-    map = {
+    """Generate random cords for server response"""
+    cords_dict = {
         'ROW': random.randint(0, 2),
         'COL': random.randint(0, 2)
     }
     try:
-        while not validate_square(map):
-            if is_board_full():
+        while not game_board.validate_square(cords_dict):
+            if game_board.is_board_full():
                 raise GameDoneException
-            map = {
+            cords_dict = {
                 'ROW': random.randint(0, 2),
                 'COL': random.randint(0, 2)
             }
-    except:
+    except GameDoneException:
         pass
     else:
-        return get_cords(map)
-
+        return game_board.get_cords(cords_dict)
 
 
 def main():
-    global board
+    """Main entry for the file"""
     serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     serv.bind(('0.0.0.0', 1729))
     serv.listen(1)
-    board = initialize_grid()
     client, addr = serv.accept()
     while True:
         try:
-            if is_board_full():
+            if game_board.is_board_full():
                 raise GameDoneException
             try:
                 data = client.recv(1024).decode()
-            except Exception as e:
-                print(str(e))
+            except Exception as err:
+                print(str(err))
             rowcol = parse_data_to_dict(data)
-            while not validate_square(rowcol):
+            while not game_board.validate_square(rowcol):
                 data = client.recv(1024).decode()
                 rowcol = parse_data_to_dict(data)
             client.send('GOTIT###'.encode())
-            update_board(rowcol)
+            game_board.update_board(rowcol, who_took=False)
             while client.recv(1024).decode() != 'GOTIT###':
                 continue
             try:
@@ -103,13 +69,11 @@ def main():
                     'ROW': cords[0],
                     'COL': cords[1]
                 }
-                update_board(outputmap)
-                print(board)
+                game_board.update_board(outputmap, True)
                 client.send(outputdata.encode())
-            except:
-                break
+            except Exception as err:
+                print(str(err))
         except GameDoneException:
-            client.send("Game#Done###".encode())
             break
     client.close()
     serv.close()
